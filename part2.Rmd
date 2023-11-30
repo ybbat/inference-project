@@ -1,0 +1,80 @@
+---
+title: "Vitamin C Supplements impact on guinea pig tooth growth"
+output: pdf_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+```
+## Synopsis
+In this report I will analyse the ToothGrowth dataset, I found that at low dosage levels, orange juice is a better vitamin C supplement than ascorbic acid but this evens out at higher dosage levels.
+
+## Analysis
+
+The ToothGrowth dataset contains data that aims to show the effect of vitamin C on tooth growth in guinea pigs through observations of types of supplements and their dosage. It can be loaded into the ToothGrowth variable with data("ToothGrowth").
+```{r load_data}
+data("ToothGrowth")
+```
+It is a data frame containing 60 observations with 3 variables. len contains the length of odontoblasts (cells responsible for tooth growth) in 60 guinea pigs. Each animal received one of three dose levels of vitamin C (0.5, 1, and 2 mg/day) by one of two delivery methods, orange juice or ascorbic acid (a form of vitamin C and coded as VC).
+```{r str}
+str(ToothGrowth)
+```
+Below is a plot of the observations in the dataset showing that the length of teeth goes up for both supplements as the dosage increases.
+```{r plot, fig.height=3, fig.width=7, message=FALSE, warning=FALSE}
+ggplot(ToothGrowth,
+       mapping=aes(dose, len, colour=supp)) +
+    geom_point() +
+    geom_smooth(method="lm", se=FALSE)
+```
+From the plot it seems like OJ is slightly better at increasing tooth length at low dosage levels, at at 2.0 both supplements seem very similar. We can confirm these intuitions using t.test with $\alpha=0.05$, rejecting the null hypothesis if the p-value is less than 0.05.
+
+
+h0: The mean length of tooth growth for OJ at dose=0.5 is not greater than the mean length for VC
+
+h1: The mean length of tooth growth for OJ at dose=0.5 is greater than the mean length for VC
+```{r d0.5}
+x = ToothGrowth[ToothGrowth$supp == "OJ" & ToothGrowth$dose == 0.5,]
+y = ToothGrowth[ToothGrowth$supp == "VC" & ToothGrowth$dose == 0.5,]
+t.test(x$len, y$len, paired=FALSE, alternative="greater")
+```
+The p-value is 0.003, which means that there is enough evidence to reject the null hypothesis, meaning that there is OJ does have a greater impact on tooth length at dose=0.5.
+
+
+h0: The mean length of tooth growth for OJ at dose=1.0 is not greater than the mean length for VC
+
+h1: The mean length of tooth growth for OJ at dose=1.0 is greater than the mean length for VC
+
+```{r d1.0}
+x = ToothGrowth[ToothGrowth$supp == "OJ" & ToothGrowth$dose == 1.0,]
+y = ToothGrowth[ToothGrowth$supp == "VC" & ToothGrowth$dose == 1.0,]
+t.test(x$len, y$len, paired=FALSE, alternative="greater")
+```
+The p-value is 1.828e-08 (extremely small), which means that there is enough evidence to reject the null hypothesis, meaning that there is OJ does have a greater impact on tooth length at dose=1.0.
+
+
+h0: The mean length of tooth growth for OJ at dose=2.0 is the same as the mean length of tooth growth for VC.
+
+h1: The mean length of tooth growth for OJ at dose=2.0 is not the same as the mean length of tooth growth for VC.
+
+```{r d2.0}
+x = ToothGrowth[ToothGrowth$supp == "OJ" & ToothGrowth$dose == 2.0,]
+y = ToothGrowth[ToothGrowth$supp == "VC" & ToothGrowth$dose == 2.0,]
+t.test(x$len, y$len, paired=FALSE)
+```
+The p-value is 0.96, which is far above the 0.05 needed to reject H0. This means that there is not enough evidence to reject the null hypothesis, meaning that there is no difference between the two supplements at dose=2.0.
+
+We may also want to test that the the the tooth length grows as dosage increases.
+
+H0: The mean length of tooth growth at dose=0.5 is the same as the mean length of tooth growth at dose=2.0.
+
+H1: The mean length of tooth growth at dose=0.5 is the greater than the mean length of tooth growth at dose=2.0.
+
+```{r dosage}
+x = ToothGrowth[ToothGrowth$dose == 2.0,]
+y = ToothGrowth[ToothGrowth$dose == 0.5,]
+t.test(x$len, y$len, paired=FALSE, alternative="greater")$p.value
+```
+
+This outcome was more obvious from the plot, but this is confirmed by a p-value of 2e-14, meaning there is enough evidence to reject the null hypothesis and say that the tooth growth at dose=2.0 is greater than the tooth growth at dose=0.5.
